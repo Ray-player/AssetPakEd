@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UObject/NoExportTypes.h"
 
 // 定义资产条目结构
 struct FAssetEntry
@@ -15,6 +14,7 @@ public:
 	}
 
 	FString AssetPath;
+	FString AssetType;
 };
 
 /**
@@ -49,11 +49,6 @@ public:
 	// 用于更新UI显示的函数
 	void AddLogMessage(const FString& Message);
 
-	// 用于绑定到UI控件的访问器
-	TOptional<float> GetCookProgressPercent() const;
-	TOptional<float> GetPakProgressPercent() const;
-	FText GetCookProgressText() const;
-	FText GetPakProgressText() const;
 
 private:
 	// 列表视图生成函数
@@ -71,15 +66,11 @@ private:
 	TSharedPtr<class SButton> BrowseButton;
 	TSharedPtr<class SButton> CookButton;
 	TSharedPtr<class SButton> PakButton;
-	TSharedPtr<class SProgressBar> CookProgressBar;
-	TSharedPtr<class SProgressBar> PakProgressBar;
 	TSharedPtr<class SEditableTextBox> FolderPathInput;
 	TSharedPtr<class SEditableTextBox> FilterInput;
 
 	// 当前状态变量
 	FString CurrentFolderPath = TEXT("");
-	float CookProgressValue = 0.0f;
-	float PakProgressValue = 0.0f;
 
 	// 进度条相关
 	TSharedPtr<STextBlock> CookProgressText;

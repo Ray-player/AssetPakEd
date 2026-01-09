@@ -32,28 +32,16 @@ FText FAssetPakEdWindow::GetCurrentFolderPath() const
 	return FText::FromString(CurrentFolderPath);
 }
 
-// 用于获取进度条百分比的辅助函数
-TOptional<float> FAssetPakEdWindow::GetCookProgressPercent() const
-{
-	return CookProgressValue;
-}
-
-TOptional<float> FAssetPakEdWindow::GetPakProgressPercent() const
-{
-	return PakProgressValue;
-}
 
 TSharedRef<SDockTab> FAssetPakEdWindow::OnSpawnPluginTab(const FSpawnTabArgs& SpawnTabArgs)
 {
 	// 定义UI文本
-	FText SelectAssetText = LOCTEXT("SelectAssetWidgetText", "Select Assets");
-	FText FolderPathText = LOCTEXT("FolderPathWidgetText", "Project Folder Path");
-	FText HintFilterAssetsText = LOCTEXT("HintFilterAssetsWidgetText", "Filter by name");
-	FText SetFolderText = LOCTEXT("SetFolderWidgetText", "Browse");
-	FText CookButtonText = LOCTEXT("CookButtonText", "Cook");
-	FText PakButtonText = LOCTEXT("PakButtonText", "Pak");
-	FText CookProgressTextLabel = LOCTEXT("CookProgressText", "Cook Progress:");
-	FText PakProgressTextLabel = LOCTEXT("PakProgressText", "Pak Progress:");
+	const FText SelectAssetText = LOCTEXT("SelectAssetWidgetText", "Select Assets");
+	const FText FolderPathText = LOCTEXT("FolderPathWidgetText", "Project Folder Path");
+	const FText HintFilterAssetsText = LOCTEXT("HintFilterAssetsWidgetText", "Filter by name");
+	const FText SetFolderText = LOCTEXT("SetFolderWidgetText", "Browse");
+	const FText CookButtonText = LOCTEXT("CookButtonText", "Cook");
+	const FText PakButtonText = LOCTEXT("PakButtonText", "Pak");
 
 	TSharedRef<SDockTab> PluginTab = SNew(SDockTab)
 		.TabRole(ETabRole::NomadTab)
@@ -138,8 +126,10 @@ TSharedRef<SDockTab> FAssetPakEdWindow::OnSpawnPluginTab(const FSpawnTabArgs& Sp
 						]
 						+ SHorizontalBox::Slot()
 						.HAlign(HAlign_Right)
+						.Padding(15.f, 0.f, 0.f, 0.f)
 						.AutoWidth()
 						[
+							// 浏览资源管理器按钮
 							SAssignNew(BrowseButton, SButton)
 							.OnClicked(this, &FAssetPakEdWindow::HandleBrowseButtonClicked)
 							.HAlign(HAlign_Right)
@@ -152,42 +142,15 @@ TSharedRef<SDockTab> FAssetPakEdWindow::OnSpawnPluginTab(const FSpawnTabArgs& Sp
 						]
 					]
 					+ SVerticalBox::Slot()
+					.HAlign(HAlign_Fill)
 					.AutoHeight()
-					.Padding(0, 5, 0, 0)
+					.Padding(10.0f)
 					[
-						// 第二行：Cook进度条和按钮 - 水平布局
+						// 第二行：Cook按钮/pak按钮
 						SNew(SHorizontalBox)
 						+ SHorizontalBox::Slot()
-						.FillWidth(5.0f) // 进度条占5份
-						[
-							SNew(SVerticalBox)
-							+ SVerticalBox::Slot()
-							.AutoHeight()
-							[
-								// 进度条上方的文字
-								SAssignNew(CookProgressText, STextBlock)
-								.Text(this, &FAssetPakEdWindow::GetCookProgressText)
-								.Justification(ETextJustify::Center)
-							]
-							+ SVerticalBox::Slot()
-							.AutoHeight()
-							.Padding(0, 2, 0, 0)
-							[
-								// 进度条
-								SAssignNew(CookProgressBar, SProgressBar)
-								.Percent(this, &FAssetPakEdWindow::GetCookProgressPercent)
-							]
-						]
-						+ SHorizontalBox::Slot()
-						  .AutoWidth() // 间隔区
-						  .Padding(5, 0) // 左右各5像素的间隔
-						[
-							// 空白间隔区域
-							SNew(SSpacer)
-							.Size(FVector2D(10, 1)) // 10像素宽的间隔
-						]
-						+ SHorizontalBox::Slot()
-						.FillWidth(1.0f) // 按钮占1份
+						.HAlign(HAlign_Left)
+						.AutoWidth()
 						[
 							// Cook按钮
 							SAssignNew(CookButton, SButton)
@@ -200,45 +163,10 @@ TSharedRef<SDockTab> FAssetPakEdWindow::OnSpawnPluginTab(const FSpawnTabArgs& Sp
 								.Text(CookButtonText)
 							]
 						]
-					]
-
-					// 第三行：Pak进度条和按钮 - 水平布局
-					+ SVerticalBox::Slot()
-					.AutoHeight()
-					.Padding(10.0f)
-					[
-						SNew(SHorizontalBox)
 						+ SHorizontalBox::Slot()
-						.FillWidth(5.0f) // 进度条占5份
-						[
-							SNew(SVerticalBox)
-							+ SVerticalBox::Slot()
-							.AutoHeight()
-							[
-								// 进度条上方的文字
-								SAssignNew(PakProgressText, STextBlock)
-								.Text(this, &FAssetPakEdWindow::GetPakProgressText)
-								.Justification(ETextJustify::Center)
-							]
-							+ SVerticalBox::Slot()
-							.AutoHeight()
-							.Padding(0, 2, 0, 0)
-							[
-								// 进度条
-								SAssignNew(PakProgressBar, SProgressBar)
-								.Percent(this, &FAssetPakEdWindow::GetPakProgressPercent)
-							]
-						]
-						+ SHorizontalBox::Slot()
-						  .AutoWidth() // 间隔区
-						  .Padding(5, 0) // 左右各5像素的间隔
-						[
-							// 空白间隔区域
-							SNew(SSpacer)
-							.Size(FVector2D(10, 1)) // 10像素宽的间隔
-						]
-						+ SHorizontalBox::Slot()
-						.FillWidth(1.0f) // 按钮占1份
+						.HAlign(HAlign_Right)
+						.Padding(20.0f, 0.f, 0.f, 0.f)
+						.AutoWidth()
 						[
 							// Pak按钮
 							SAssignNew(PakButton, SButton)
@@ -260,17 +188,11 @@ TSharedRef<SDockTab> FAssetPakEdWindow::OnSpawnPluginTab(const FSpawnTabArgs& Sp
 	PluginTab->SetTabIcon(FAssetPakEdStyle::Get().GetBrush("AssetPakEd.OpenPluginWindow"));
 
 	// 初始化默认路径
-	if (FPaths::IsProjectFilePathSet())
-	{
-		CurrentFolderPath = FPaths::GetPath(FPaths::GetProjectFilePath());
-	}
-	else
-	{
-		CurrentFolderPath = FPaths::ProjectDir();
-	}
+	//if (FPaths::IsProjectFilePathSet())
+	CurrentFolderPath = FPaths::ConvertRelativePathToFull(FPaths::ProjectDir());
 
 	// 填充资产列表（这里使用项目内容目录作为示例）
-	PopulateAssetList(FPaths::ProjectContentDir());
+	//PopulateAssetList(FPaths::ProjectContentDir());
 
 	return PluginTab;
 }
@@ -280,7 +202,7 @@ void FAssetPakEdWindow::PopulateAssetList(const FString& ProjectContentDirectory
 	AllAssets.Empty();
 	Assets.Empty();
 
-	// 示例：添加一些虚拟资产条目
+	/* 示例：添加一些虚拟资产条目
 	// 在实际实现中，这里应该扫描项目内容目录并添加真实资产
 	TArray<FString> AssetPaths;
 
@@ -297,7 +219,7 @@ void FAssetPakEdWindow::PopulateAssetList(const FString& ProjectContentDirectory
 		{
 			FString RelativePath = AssetPath;
 			RelativePath.RemoveFromStart(ProjectContentDirectory);
-			RelativePath.RemoveAt(0); // 移除开头的斜杠
+			//RelativePath.RemoveAt(0); // 移除开头的斜杠
 
 			TSharedPtr<FAssetEntry> Entry = MakeShareable(new FAssetEntry(RelativePath));
 			AllAssets.Add(Entry);
@@ -309,7 +231,7 @@ void FAssetPakEdWindow::PopulateAssetList(const FString& ProjectContentDirectory
 	if (AssetListWidget && AssetListWidget->IsParentValid())
 	{
 		AssetListWidget->RebuildList();
-	}
+	}*/
 }
 
 void FAssetPakEdWindow::FilterAssetList(const FString& InFilterText)
@@ -393,7 +315,7 @@ FReply FAssetPakEdWindow::HandleBrowseButtonClicked()
 			}
 
 			// 重新填充资产列表
-			PopulateAssetList(CurrentFolderPath / TEXT("Content"));
+			PopulateAssetList(CurrentFolderPath);
 		}
 	}
 
@@ -406,7 +328,7 @@ FReply FAssetPakEdWindow::HandleCookButtonClicked()
 	// 这里应该开始Cook流程，并更新进度条
 	UE_LOG(LogTemp, Warning, TEXT("Cook button clicked - this needs implementation"));
 
-	// 示例：模拟Cook进度
+	/* 示例：模拟Cook进度
 	AsyncTask(ENamedThreads::AnyBackgroundThreadNormalTask, [this]()
 	{
 		// 模拟Cook过程
@@ -435,7 +357,7 @@ FReply FAssetPakEdWindow::HandleCookButtonClicked()
 			AddLogMessage(TEXT("Cook completed!"));
 		});
 	});
-
+	*/
 	return FReply::Handled();
 }
 
@@ -445,7 +367,7 @@ FReply FAssetPakEdWindow::HandlePakButtonClicked()
 	// 这里应该开始Pak流程，并更新进度条
 	UE_LOG(LogTemp, Warning, TEXT("Pak button clicked - this needs implementation"));
 
-	// 示例：模拟Pak进度
+	/* 示例：模拟Pak进度
 	AsyncTask(ENamedThreads::AnyBackgroundThreadNormalTask, [this]()
 	{
 		// 模拟Pak过程
@@ -474,7 +396,7 @@ FReply FAssetPakEdWindow::HandlePakButtonClicked()
 			AddLogMessage(TEXT("Pak completed!"));
 		});
 	});
-
+	*/
 	return FReply::Handled();
 }
 
@@ -484,15 +406,7 @@ void FAssetPakEdWindow::AddLogMessage(const FString& Message)
 	UE_LOG(LogTemp, Display, TEXT("AssetPakEd Log: %s"), *Message);
 }
 
-FText FAssetPakEdWindow::GetCookProgressText() const
-{
-	return FText::FromString(FString::Printf(TEXT("%.0f%%"), CookProgressValue * 100));
-}
 
-FText FAssetPakEdWindow::GetPakProgressText() const
-{
-	return FText::FromString(FString::Printf(TEXT("%.0f%%"), PakProgressValue * 100));
-}
 
 void FAssetPakEdWindow::OnFolderPathCommitted(const FText& InText, const ETextCommit::Type InTextAction)
 {
