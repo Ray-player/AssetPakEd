@@ -26,4 +26,6 @@ private:
 
 private:
 	TSharedPtr<class FUICommandList> PluginCommands;
+	// 保存窗口实例的引用
+	TSharedPtr<class FAssetPakEdWindow> AssetPakEdWindowPtr;
 };

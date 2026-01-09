@@ -3,6 +3,7 @@
 #include "AssetPakEd.h"
 #include "AssetPakEdStyle.h"
 #include "AssetPakEdCommands.h"
+#include "AssetPakEdWindow.h" // 包含新的窗口类
 #include "LevelEditor.h"
 #include "Widgets/Docking/SDockTab.h"
 #include "Widgets/Layout/SBox.h"
@@ -54,24 +55,10 @@ void FAssetPakEdModule::ShutdownModule()
 
 TSharedRef<SDockTab> FAssetPakEdModule::OnSpawnPluginTab(const FSpawnTabArgs& SpawnTabArgs)
 {
-	FText WidgetText = FText::Format(
-		LOCTEXT("WindowWidgetText", "Add code to {0} in {1} to override this window's contents"),
-		FText::FromString(TEXT("FAssetPakEdModule::OnSpawnPluginTab")),
-		FText::FromString(TEXT("AssetPakEd.cpp"))
-		);
-
-	return SNew(SDockTab)
-		.TabRole(ETabRole::NomadTab)
-		[
-			// Put your tab content here!
-			SNew(SBox)
-			.HAlign(HAlign_Center)
-			.VAlign(VAlign_Center)
-			[
-				SNew(STextBlock)
-				.Text(WidgetText)
-			]
-		];
+	// 创建新的AssetPakEd窗口实例
+	AssetPakEdWindowPtr = MakeShareable(new FAssetPakEdWindow());
+	// 使用新的窗口的标签页生成函数
+	return AssetPakEdWindowPtr->OnSpawnPluginTab(SpawnTabArgs);
 }
 
 void FAssetPakEdModule::PluginButtonClicked()
