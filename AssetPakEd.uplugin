@@ -1,0 +1,23 @@
+﻿{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "AssetPakEd",
+	"Description": "管理Asset资源并打包为pak",
+	"Category": "Other",
+	"CreatedBy": "Ray",
+	"CreatedByURL": "",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"CanContainContent": false,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "AssetPakEd",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
+		}
+	]
+}
