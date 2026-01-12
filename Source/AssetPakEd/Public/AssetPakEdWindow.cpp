@@ -18,6 +18,7 @@
 #include "ProjectDescriptor.h"
 #include "DesktopPlatformModule.h"
 #include "Widgets/Notifications/SProgressBar.h"
+#include "Widgets/Text/SMultiLineEditableText.h"
 #include "Widgets/Text/STextBlock.h"
 
 #define LOCTEXT_NAMESPACE "FAssetPakEdWindow"
@@ -179,6 +180,19 @@ TSharedRef<SDockTab> FAssetPakEdWindow::OnSpawnPluginTab(const FSpawnTabArgs& Sp
 								.Text(PakButtonText)
 							]
 						]
+					]
+					+ SVerticalBox::Slot()
+					.HAlign(HAlign_Fill).VAlign(VAlign_Fill)
+					.FillHeight(1.f)
+					.Padding(10.0f)
+					[
+						SAssignNew(InfoDisplayText, SMultiLineEditableText)
+						.Text(FText::FromString(TEXT("AssetPakEd 运行信息:\n")))
+						.IsReadOnly(true)  // 设置为只读，不允许用户编辑
+						.AllowContextMenu(false)  // 禁用右键菜单
+						.AutoWrapText(true)  // 自动换行
+						//.VScrollBarStyle(&FAppStyle::Get().GetWidgetStyle<FScrollBarStyle>("GenericScrollBoxVertical"))
+					
 					]
 				]
 			]
@@ -404,8 +418,31 @@ void FAssetPakEdWindow::AddLogMessage(const FString& Message)
 {
 	// TODO: 添加日志消息显示逻辑
 	UE_LOG(LogTemp, Display, TEXT("AssetPakEd Log: %s"), *Message);
+	// 将消息添加到信息显示组件中
+	if (InfoDisplayText.IsValid())
+	{
+		FText CurrentText = InfoDisplayText->GetText();
+		FText NewText = FText::FromString(CurrentText.ToString() + TEXT("\n") + Message);
+		InfoDisplayText->SetText(NewText);
+	}
 }
 
+void FAssetPakEdWindow::AppendInfoLine(const FString& InfoText, TSharedPtr<FAssetPakEdWindow> WindowInstance)
+{
+	if (WindowInstance.IsValid() && WindowInstance->InfoDisplayText.IsValid())
+	{
+		// 在游戏线程中更新UI
+		AsyncTask(ENamedThreads::GameThread, [WindowInstance, InfoText]()
+		{
+			FText CurrentText = WindowInstance->InfoDisplayText->GetText();
+			FText NewText = FText::FromString(CurrentText.ToString() + TEXT("\n") + InfoText);
+			WindowInstance->InfoDisplayText->SetText(NewText);
+			
+			//todo 将光标移动到文档末尾以确保滚动到底部
+			//WindowInstance->InfoDisplayText->SetApplyLineHeightToBottomLine();
+		});
+	}
+}
 
 
 void FAssetPakEdWindow::OnFolderPathCommitted(const FText& InText, const ETextCommit::Type InTextAction)

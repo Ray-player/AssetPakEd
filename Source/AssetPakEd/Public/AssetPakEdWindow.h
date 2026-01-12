@@ -48,6 +48,8 @@ public:
 
 	// 用于更新UI显示的函数
 	void AddLogMessage(const FString& Message);
+	// 静态方法：向信息显示组件添加一行文本
+	static void AppendInfoLine(const FString& InfoText, TSharedPtr<FAssetPakEdWindow> WindowInstance);
 
 
 private:
@@ -68,11 +70,8 @@ private:
 	TSharedPtr<class SButton> PakButton;
 	TSharedPtr<class SEditableTextBox> FolderPathInput;
 	TSharedPtr<class SEditableTextBox> FilterInput;
-
+	TSharedPtr<class SMultiLineEditableText> InfoDisplayText;
 	// 当前状态变量
 	FString CurrentFolderPath = TEXT("");
-
-	// 进度条相关
-	TSharedPtr<STextBlock> CookProgressText;
-	TSharedPtr<STextBlock> PakProgressText;
+	
 };
