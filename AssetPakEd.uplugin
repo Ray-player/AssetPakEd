@@ -18,6 +18,11 @@
 			"Name": "AssetPakEd",
 			"Type": "Editor",
 			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "RunTimePakEd",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
 		}
 	]
 }
