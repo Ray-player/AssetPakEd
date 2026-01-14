@@ -2,7 +2,6 @@
 
 
 #include "PakManagerSubSystem.h"
-
 #include "IPlatformFilePak.h"
 #include "Engine/StaticMeshActor.h"
 
@@ -13,110 +12,122 @@ void UPakManagerSubSystem::Initialize(FSubsystemCollectionBase& Collection)
 
 void UPakManagerSubSystem::Deinitialize()
 {
+	// 卸载所有挂载的Pak
+	for (const auto& MountMes : MountMessages)
+	{
+		UnMountPakAsset(MountMes.OriPakPath);
+	}
+	MountMessages.Empty();
 	Super::Deinitialize();
 }
 
-void UPakManagerSubSystem::LoadPakAsset(FString PakFilePath)
+FPakPlatformFile* UPakManagerSubSystem::GetPakPlatform()
 {
-	FString PakFileFullPath = PakFilePath;
-	FPakPlatformFile* PakPlatformFile = (FPakPlatformFile*)FPlatformFileManager::Get().GetPlatformFile(FPakPlatformFile::GetTypeName());
 	if (!PakPlatformFile)
 	{
-		UE_LOG(LogTemp, Log, TEXT("GetPlatformFile(TEXT(\"PakFile\") is NULL"));
-		return;
-	}
-	PakFileFullPath = FPaths::ConvertRelativePathToFull(PakFileFullPath);
-	TRefCountPtr<FPakFile> TmpPak = new FPakFile(PakPlatformFile, *PakFileFullPath, false);
-	FString MountPoint = TmpPak->GetMountPoint();
-	int32 PosContent = MountPoint.Find("../../../", ESearchCase::Type::IgnoreCase, ESearchDir::FromEnd);
-	FString NewMountPoint = MountPoint.LeftChop(PosContent);
-
-	if (FPaths::FileExists(PakFileFullPath) && FPaths::GetExtension(PakFileFullPath) == TEXT("pak"))
-	{
-		// 注意 ProjectSetting 中的 UseIoStore需要取消勾选，否则挂载不上
-		if (bool MountRet = this->MountPakAsset(*PakFileFullPath, 0, *MountPoint))
+		/*
+			Packaged shipping builds will have a PakFile platform.
+			For other build types a new pak platform file will be created.
+		*/
+		if (IPlatformFile *CurrentPlatformFile = FPlatformFileManager::Get().FindPlatformFile(TEXT("PakFile")))
 		{
-			TArray<FString> FoundFileNames;
-			TmpPak->FindPrunedFilesAtPath(FoundFileNames, *MountPoint, true, false, true);
-			if (FoundFileNames.Num() > 0)
-			{
-				for (FString& FileName : FoundFileNames)
-				{
-					if (FileName.EndsWith(".uasset"))
-					{
-						FString NewFileName = FileName;
-						NewFileName.RemoveFromEnd(TEXT(".uasset"));
-						int32 Pos = NewFileName.Find("/Content/");
-						NewFileName = NewFileName.RightChop(Pos + 8);
-						NewFileName = "/Game" + NewFileName;
-						UObject* LoadedObj = StaticLoadObject(UObject::StaticClass(), NULL, *NewFileName);
+			//FLogHelper::Log(LL_VERBOSE, TEXT("Found PakPlatformFile"));
+			UE_LOG(LogPakFile, Log, TEXT("Found PakPlatformFile"));
+			PakPlatformFile = MakeShareable(static_cast<FPakPlatformFile*>(CurrentPlatformFile));
+		}
+		else
+		{
+			PakPlatformFile = MakeShareable(new FPakPlatformFile());
 
-						if (LoadedObj)
-						{
-							UE_LOG(LogTemp, Warning, TEXT("加载pak文件成功"));
-							UStaticMesh* SM = Cast<UStaticMesh>(LoadedObj);
-							if (SM)
-							{
-								AStaticMeshActor* SMA = GetWorld()->SpawnActor<AStaticMeshActor>();
-								if (SMA)
-								{
-									SMA->SetMobility(EComponentMobility::Movable);
-									SMA->GetStaticMeshComponent()->SetStaticMesh(SM);
-								}
-								SMA->SetActorLocation(FVector(200.f, 0.f, 100.f));
-							}
-						}
-						else
-						{
-							UE_LOG(LogTemp, Warning, TEXT("load pak file failed"));
-						}
-					}
-				}
+			ensure(PakPlatformFile != nullptr);
+
+			IPlatformFile &PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
+
+#if WITH_EDITOR
+			// Keep the original platform file for non packaged builds.
+			OriginalPlatformFile = &PlatformFile;
+#endif
+
+			if (PakPlatformFile->Initialize(&PlatformFile, TEXT("")))
+			{
+				FPlatformFileManager::Get().SetPlatformFile(*PakPlatformFile);
+			}
+			else
+			{
+				UE_LOG(LogPakFile, Log, TEXT("Failed to initialize PakPlatformFile"));
 			}
 		}
 	}
+
+	ensure(PakPlatformFile != nullptr);
+	return PakPlatformFile.Get();
 }
 
-void UPakManagerSubSystem::ExecMountPakAsset(FString InPakPath, int32 InPakOrder, FString InMountPoint)
+FMountMes UPakManagerSubSystem::GetMountedMessage(const FString& PakName)
 {
-	MountPakAsset(InPakPath, InPakOrder, InMountPoint);
-}
-
-bool UPakManagerSubSystem::MountPakAsset(const FString& PakPath, int32 PakOrder, const FString& InMountPoint)
-{
-	bool bMounted = false;
-
-	FPakPlatformFile* PakFileMgr = (FPakPlatformFile*)FPlatformFileManager::Get().GetPlatformFile(FPakPlatformFile::GetTypeName());
-	if (!PakFileMgr)
+	for (const auto& MountMes : MountMessages)
 	{
-		UE_LOG(LogPakFile, Log, TEXT("GetPlatformFile(TEXT(\"PakFile\") is NULL"));
-		return false;
-	}
-
-	PakOrder = FMath::Max(0, PakOrder);
-
-	if (FPaths::FileExists(PakPath) && FPaths::GetExtension(PakPath) == TEXT("pak"))
-	{
-		bool bIsEmptyMountPoint = InMountPoint.IsEmpty();
-		const TCHAR* MountPoint = bIsEmptyMountPoint ? NULL : InMountPoint.GetCharArray().GetData();
-
-#if !WITH_EDITOR
-		
-		if (PakFileMgr->Mount(*PakPath, PakOrder, MountPoint))
+		if (MountMes.OriPakPath.Contains(PakName))
 		{
-			UE_LOG(LogHotPatcher, Log, TEXT("Mounted = %s, Order = %d, MountPoint = %s"), *PakPath, PakOrder, !MountPoint ? TEXT("(NULL)") : MountPoint);
-			bMounted = true;
+			return MountMes;
 		}
-		else {
-			UE_LOG(LogHotPatcher, Error, TEXT("Faild to mount pak = %s"), *PakPath);
-			bMounted = false;
-		}
+	}
+	return FMountMes();
+}
 
-#endif
+EPakResult UPakManagerSubSystem::MountPakAsset(const FString& InPakPath, bool bIsPluginPak)
+{
+	IPlatformFile* OldPlatform = &FPlatformFileManager::Get().GetPlatformFile();
+
+	if (!FPlatformFileManager::Get().GetPlatformFile().FileExists(*InPakPath))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Pak path not exists: %s"), *InPakPath);
+		return EPakResult::FalseOut;
 	}
 
-	return bMounted;
+	// 第三个参数是表示Pak是否加密
+	const TRefCountPtr<FPakFile> TmpPak = new FPakFile(OldPlatform, *InPakPath, false);
+
+	const FString OldPakMountPath = TmpPak->GetMountPoint();
+	int32 FindPos;
+	if (bIsPluginPak)
+	{
+		FindPos = OldPakMountPath.Find("Plugins/");
+	}
+	else
+	{
+		FindPos = OldPakMountPath.Find("Content/");
+	}
+
+	//这一步是为了将不同来源的资产的目前前缀给去掉，生成新的当前项目下的挂载点
+	FString NewMountPath = OldPakMountPath.RightChop(FindPos);
+	NewMountPath = FPaths::Combine(FPaths::ProjectDir(), NewMountPath);
+
+	TmpPak->SetMountPoint(*NewMountPath);
+	
+	// todo 编辑下不要执行Mount操作，不然大概率会跟你的现有资产冲突
+	if (GetPakPlatform()->Mount(*InPakPath, 1, *NewMountPath))
+	{
+		TArray<FString> FoundFilenames;
+		TmpPak->FindPrunedFilesAtPath( *TmpPak->GetMountPoint(),FoundFilenames, true, false, true);
+
+		TArray<FString> ParsedAssets;
+		for (const auto& Asset : FoundFilenames)
+		{
+			if (Asset.EndsWith(TEXT(".uasset")))
+			{
+				FString NewFileName = ConvertPakFile(Asset, bIsPluginPak);// 根据UE的规则，需要将原始路径转换下
+				NewFileName.RemoveFromEnd(TEXT(".uasset"));
+				ParsedAssets.Add(NewFileName);
+			}
+		}
+		// 添加挂载信息
+		MountMessages.Add(FMountMes(InPakPath, NewMountPath, ParsedAssets));
+		return EPakResult::TrueOut;
+	}
+	return EPakResult::FalseOut;
 }
+
 
 bool UPakManagerSubSystem::UnMountPakAsset(const FString& PakPath)
 {
@@ -132,4 +143,28 @@ bool UPakManagerSubSystem::UnMountPakAsset(const FString& PakPath)
 	if (!FPaths::FileExists(PakPath))
 		return false;
 	return PakFileMgr->Unmount(*PakPath);
+}
+
+FString UPakManagerSubSystem::ConvertPakFile(const FString& InFileName, bool bIsPluginPak)
+{
+	FString NewFileName = InFileName;
+
+	// 主要就是将原始目录变成平时进行资产引用的路径
+	if (bIsPluginPak)
+	{
+		const FString PluginsPath = FPaths::Combine(FPaths::ProjectDir(), TEXT("Plugins"));
+		NewFileName.ReplaceInline(*PluginsPath, TEXT(""));
+		NewFileName.ReplaceInline(TEXT("/Content"), TEXT(""));
+	}
+	else
+	{
+		const FString PathDir = FPaths::ProjectContentDir();
+		NewFileName.ReplaceInline(*PathDir, TEXT("/Game/"));
+	}
+
+	return NewFileName;
+}
+
+void UPakManagerSubSystem::RegisterLevel(const FString& LevelName) const
+{
 }
