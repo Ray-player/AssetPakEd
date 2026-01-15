@@ -106,20 +106,18 @@ struct FAssetEntry {
 
 ## 目录结构
 
-├── Source/  
-│ ├── AssetPakEd/ # 编辑器模块  
-│ │ ├── Public/ # 头文件  
-│ │ └── Private/ # 实现文件  
-│ └── RunTimePakEd/ # 运行时模块  
-│ ├── Public/ # 头文件  
-│ └── Private/ # 实现文件  
-├── Content/ # 插件内容资产  
-└── Resources/ # 图标资源  
+├── Source/
+│ ├── AssetPakEd/ # 编辑器模块
+│ │ ├── Public/ # 头文件
+│ │ └── Private/ # 实现文件
+│ └── RunTimePakEd/ # 运行时模块
+│ ├── Public/ # 头文件
+│ └── Private/ # 实现文件
+├── Content/ # 插件内容资产
+└── Resources/ # 图标资源
 
 ## 注意事项
 
-1. 确保有足够的磁盘空间进行Pak打包操作
-2. 挂载Pak包时注意路径权限和文件锁定
-3. 建议在开发阶段测试Pak包的加载性能
-4. 注意插件Pak和普通Pak包的区别使用
+插件可以加载任何路径下的Pak资源包，在控件蓝图 `BP_LoadPak` 中可以设置初始加载Pak包的路径，默认为 `Project/Saved` 文件夹下插件自带的测试pak包 `PakPluginTest_Windows_001_P.pak`；如果为编辑器环境下可以使用如图上方路径直接访问插件目录下的该Pak包
+![Tips1](images/README/Tips1.png)
 
