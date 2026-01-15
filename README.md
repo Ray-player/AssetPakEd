@@ -106,15 +106,15 @@ struct FAssetEntry {
 
 ## 目录结构
 
-├── Source/
-│ ├── AssetPakEd/ # 编辑器模块
-│ │ ├── Public/ # 头文件
-│ │ └── Private/ # 实现文件
-│ └── RunTimePakEd/ # 运行时模块
-│ ├── Public/ # 头文件
-│ └── Private/ # 实现文件
-├── Content/ # 插件内容资产
-└── Resources/ # 图标资源
+├── Source/  
+│ ├── AssetPakEd/ # 编辑器模块  
+│ │ ├── Public/ # 头文件  
+│ │ └── Private/ # 实现文件  
+│ └── RunTimePakEd/ # 运行时模块  
+│ ├── Public/ # 头文件  
+│ └── Private/ # 实现文件  
+├── Content/ # 插件内容资产  
+└── Resources/ # 图标资源  
 
 ## 注意事项
 
