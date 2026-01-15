@@ -75,13 +75,28 @@ FMountMes UPakManagerSubSystem::GetMountedMessage(const FString& PakName)
 	return FMountMes();
 }
 
+TArray<FString> UPakManagerSubSystem::GetAllMountAssets()
+{
+	TArray<FString> AssetNames;
+	for (const auto& MountMes : MountMessages)
+	{
+		AssetNames.Append(MountMes.PakAssets);
+	}
+	return AssetNames;
+}
+
 EPakResult UPakManagerSubSystem::MountPakAsset(const FString& InPakPath, bool bIsPluginPak)
 {
+	if (!GetMountedMessage(InPakPath).IsEmpty())
+	{
+		UE_LOG(LogPakFile, Warning, TEXT("Pak path already mounted: %s"), *InPakPath);
+		return EPakResult::TrueOut;
+	}
 	IPlatformFile* OldPlatform = &FPlatformFileManager::Get().GetPlatformFile();
 
 	if (!FPlatformFileManager::Get().GetPlatformFile().FileExists(*InPakPath))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Pak path not exists: %s"), *InPakPath);
+		UE_LOG(LogPakFile, Warning, TEXT("Pak path not exists: %s"), *InPakPath);
 		return EPakResult::FalseOut;
 	}
 
@@ -104,8 +119,12 @@ EPakResult UPakManagerSubSystem::MountPakAsset(const FString& InPakPath, bool bI
 	NewMountPath = FPaths::Combine(FPaths::ProjectDir(), NewMountPath);
 
 	TmpPak->SetMountPoint(*NewMountPath);
-	
-	// todo 编辑下不要执行Mount操作，不然大概率会跟你的现有资产冲突
+	if (GetWorld()->WorldType == EWorldType::PIE)
+	{
+		UE_LOG(LogPakFile, Warning, TEXT("PIE模式下不能挂载Pak文件"));
+		return EPakResult::FalseOut;
+	}
+	// PIE模式下不要执行Mount操作，不然大概率会跟你的现有资产冲突
 	if (GetPakPlatform()->Mount(*InPakPath, 1, *NewMountPath))
 	{
 		TArray<FString> FoundFilenames;
@@ -143,6 +162,34 @@ bool UPakManagerSubSystem::UnMountPakAsset(const FString& PakPath)
 	if (!FPaths::FileExists(PakPath))
 		return false;
 	return PakFileMgr->Unmount(*PakPath);
+}
+
+UObject* UPakManagerSubSystem::LoadAssetAsObject(const FString& AssetName)
+{
+	return LoadUObjectFromPak<UObject>(AssetName);
+}
+
+UStaticMesh* UPakManagerSubSystem::LoadAssetAsStaticMesh(const FString& AssetName)
+{
+	return LoadUObjectFromPak<UStaticMesh>(AssetName);
+	/*
+	if (const FMountMes* MountMes = GetMountedMesFromAssetName(AssetName); !MountMes)
+	{
+	}
+	return nullptr;
+	*/
+}
+
+FMountMes* UPakManagerSubSystem::GetMountedMesFromAssetName(const FString& AssetName)
+{
+	for (auto& MountMes : MountMessages)
+	{
+		if (MountMes.HasAsset(AssetName))
+		{
+			return &MountMes;
+		}
+	}
+	return nullptr;
 }
 
 FString UPakManagerSubSystem::ConvertPakFile(const FString& InFileName, bool bIsPluginPak)

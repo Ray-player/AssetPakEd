@@ -20,6 +20,14 @@ struct FMountMes
 {
 	GENERATED_BODY()
 public:
+	bool IsEmpty()
+	{
+		return OriPakPath.IsEmpty() && NowMountPoint.IsEmpty() && PakAssets.IsEmpty();
+	}
+	bool HasAsset(const FString& AssetName)
+	{
+		return PakAssets.Contains(AssetName);
+	}
 	FMountMes()
 	{
 		OriPakPath = TEXT("");
@@ -52,14 +60,31 @@ public:
 
 	FPakPlatformFile *GetPakPlatform();
 	
-	UFUNCTION(BlueprintCallable,BlueprintPure, Category = "PakManager")
+	UFUNCTION(BlueprintPure, Category = "PakManager")
 	FMountMes GetMountedMessage(const FString& PakName);
+	UFUNCTION(BlueprintPure, Category = "PakManager")
+	TArray<FString> GetAllMountAssets();
 	
 	UFUNCTION(BlueprintCallable, Category="PakManager",meta = (ExpandEnumAsExecs = "ReturnValue"))
 	EPakResult MountPakAsset(const FString& InPakPath,bool bIsPluginPak=false);
 	UFUNCTION(BlueprintCallable, Category = "PakManager")
 	bool UnMountPakAsset(const FString& PakPath);
 
+	//从Pak文件中加载资产
+	UFUNCTION(BlueprintPure, Category="PakManager")
+	UObject* LoadAssetAsObject(const FString &AssetName);
+	
+	UFUNCTION(BlueprintPure, Category="PakManager")
+	UStaticMesh* LoadAssetAsStaticMesh(const FString &AssetName);
+
+	
+	FMountMes* GetMountedMesFromAssetName(const FString& AssetName);
+	template<class T>
+	T *LoadUObjectFromPak(const FString &Filename)
+	{
+		//const FString Name = T::StaticClass()->GetName() + TEXT("'") + Filename + TEXT(".") + FPackageName::GetShortName(Filename) + TEXT("'");
+		return Cast<T>(StaticLoadObject(T::StaticClass(), nullptr, *Filename));
+	}
 private:
 	TSharedPtr<FPakPlatformFile> PakPlatformFile;
 	TArray<FMountMes> MountMessages;

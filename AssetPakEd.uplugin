@@ -3,13 +3,13 @@
 	"Version": 1,
 	"VersionName": "1.0",
 	"FriendlyName": "AssetPakEd",
-	"Description": "管理Asset资源并打包为pak",
+	"Description": "对外部引入的Pak包进行挂载与加载管理",
 	"Category": "Other",
 	"CreatedBy": "Ray",
 	"CreatedByURL": "",
 	"DocsURL": "",
 	"MarketplaceURL": "",
-	"CanContainContent": false,
+	"CanContainContent": true,
 	"IsBetaVersion": false,
 	"IsExperimentalVersion": false,
 	"Installed": false,
@@ -17,7 +17,8 @@
 		{
 			"Name": "AssetPakEd",
 			"Type": "Editor",
-			"LoadingPhase": "Default"
+			"LoadingPhase": "Default",
+			"Enabled": false
 		},
 		{
 			"Name": "RunTimePakEd",

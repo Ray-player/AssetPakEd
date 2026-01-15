@@ -17,7 +17,7 @@ static const FName AssetPakEdTabName("AssetPakEd");
 void FAssetPakEdModule::StartupModule()
 {
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
-	
+	/*
 	FAssetPakEdStyle::Initialize();
 	FAssetPakEdStyle::ReloadTextures();
 
@@ -35,13 +35,12 @@ void FAssetPakEdModule::StartupModule()
 	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(AssetPakEdTabName, FOnSpawnTab::CreateRaw(this, &FAssetPakEdModule::OnSpawnPluginTab))
 		.SetDisplayName(LOCTEXT("FAssetPakEdTabTitle", "AssetPakEd"))
 		.SetMenuType(ETabSpawnerMenuType::Hidden);
+	*/
 }
 
 void FAssetPakEdModule::ShutdownModule()
 {
-	// This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
-	// we call this function before unloading the module.
-
+	/*
 	UToolMenus::UnRegisterStartupCallback(this);
 
 	UToolMenus::UnregisterOwner(this);
@@ -51,6 +50,7 @@ void FAssetPakEdModule::ShutdownModule()
 	FAssetPakEdCommands::Unregister();
 
 	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(AssetPakEdTabName);
+	*/
 }
 
 TSharedRef<SDockTab> FAssetPakEdModule::OnSpawnPluginTab(const FSpawnTabArgs& SpawnTabArgs)
